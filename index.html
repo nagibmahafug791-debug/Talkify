@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Talkify</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#d6241c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+:root{--red:#d6241c;--red2:#b81c15;--bg:#fff7f5;--card:#fff;--ink:#2a1614;--mute:#8a6e6a;--line:#f0dcd8;--me:#d6241c;--them:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#1a0f0e;--card:#251615;--ink:#fbeeec;--mute:#b79590;--line:#3a2321;--them:#2e1b19}}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;background:var(--bg);color:var(--ink);overflow:hidden}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.hide{display:none!important}
+#auth{height:100%;display:grid;place-items:center;padding:24px}
+.box{width:100%;max-width:360px;text-align:center}
+.box img{width:120px;margin-bottom:8px}
+.box h1{font-size:34px;letter-spacing:-.5px}
+.box p{color:var(--mute);margin:4px 0 22px}
+.box input{width:100%;padding:14px 16px;margin-bottom:10px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.btn{width:100%;padding:14px;border-radius:14px;background:var(--red);color:#fff;font-weight:600}
+.btn:active{background:var(--red2)}
+.link{margin-top:14px;color:var(--red);font-weight:600}
+.err{color:var(--red);font-size:14px;min-height:20px;margin-bottom:8px}
+#app{height:100%;display:grid;grid-template-columns:340px 1fr}
+.side{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--card)}
+.top{display:flex;align-items:center;gap:10px;padding:calc(12px + env(safe-area-inset-top)) 14px 12px;border-bottom:1px solid var(--line)}
+.top img{width:34px}.top b{font-size:20px;flex:1}
+.top button{color:var(--mute);font-size:14px}
+.search{padding:10px 14px}
+.search input{width:100%;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg)}
+#people{overflow:auto;flex:1}
+.person{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;text-align:left}
+.person:hover,.person.on{background:var(--bg)}
+.av{width:44px;height:44px;border-radius:50%;background:var(--red);color:#fff;display:grid;place-items:center;font-weight:700;flex:none}
+.person small{display:block;color:var(--mute)}
+.empty{padding:30px;text-align:center;color:var(--mute)}
+.main{display:flex;flex-direction:column;min-height:0;min-width:0}
+.head{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;background:var(--card);border-bottom:1px solid var(--line)}
+.back{display:none;font-size:24px;color:var(--red);padding:0 6px}
+#msgs{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:6px}
+.m{max-width:78%;padding:9px 13px;border-radius:18px;background:var(--them);border:1px solid var(--line);align-self:flex-start;overflow-wrap:anywhere;white-space:pre-wrap}
+.m.me{align-self:flex-end;background:var(--me);color:#fff;border-color:var(--me)}
+.m img{display:block;max-width:100%;border-radius:12px;margin:-3px -6px 3px;cursor:zoom-in}
+.m time{display:block;font-size:11px;opacity:.65;text-align:right;margin-top:2px}
+.bar{display:flex;gap:8px;align-items:center;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line)}
+.bar input[type=text]{flex:1;min-width:0;padding:12px 16px;border-radius:24px;border:1px solid var(--line);background:var(--bg)}
+.ic{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:var(--red);font-size:22px;flex:none}
+.send{background:var(--red);color:#fff}
+.none{flex:1;display:grid;place-items:center;text-align:center;color:var(--mute)}
+.none img{width:110px;opacity:.9}
+#view{position:fixed;inset:0;background:#000d;display:grid;place-items:center;z-index:9}
+#view img{max-width:96%;max-height:92%}
+#install{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--red);color:#fff;padding:12px 20px;border-radius:24px;z-index:5;box-shadow:0 6px 20px #0004}
+@media(max-width:720px){
+ #app{grid-template-columns:1fr}
+ .main{display:none}
+ #app.chat .side{display:none}
+ #app.chat .main{display:flex}
+ .back{display:block}
+}
+@media(prefers-reduced-motion:no-preference){.m{animation:pop .15s ease-out}@keyframes pop{from{transform:scale(.96);opacity:0}}}
+</style></head>
+<body>
+<section id="auth" class="hide">
+ <form class="box" id="authForm">
+  <img src="icons/logo.png" alt="">
+  <h1>Talkify</h1><p id="authSub">Message and share photos with friends</p>
+  <input id="name" placeholder="Your name" autocomplete="name" class="hide">
+  <input id="email" type="email" placeholder="Email" autocomplete="email" required>
+  <input id="pass" type="password" placeholder="Password (min 6 characters)" autocomplete="current-password" minlength="6" required>
+  <div class="err" id="err"></div>
+  <button class="btn" id="authBtn">Log in</button>
+  <button type="button" class="link" id="toggle">New here? Create account</button>
+ </form>
+</section>
+
+<section id="app" class="hide">
+ <aside class="side">
+  <div class="top"><img src="icons/logo.png" alt=""><b>Talkify</b><button id="out">Log out</button></div>
+  <div class="search"><input id="q" placeholder="Search people"></div>
+  <div id="people"></div>
+ </aside>
+ <main class="main">
+  <div class="none" id="none"><div><img src="icons/logo.png" alt=""><p>Pick someone to start chatting</p></div></div>
+  <div class="head hide" id="head"><button class="back" id="back" aria-label="Back">‹</button><div class="av" id="hav"></div><b id="hname"></b></div>
+  <div id="msgs" class="hide"></div>
+  <form class="bar hide" id="bar">
+   <label class="ic" title="Send photo" tabindex="0">📷<input id="file" type="file" accept="image/*" hidden></label>
+   <input type="text" id="txt" placeholder="Message" autocomplete="off">
+   <button class="ic send" aria-label="Send">➤</button>
+  </form>
+ </main>
+</section>
+<div id="view" class="hide"><img alt=""></div>
+<button id="install" class="hide">Install Talkify</button>
+
+<script type="module">
+import {firebaseConfig} from "./firebase-config.js";
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,onAuthStateChanged,signOut,updateProfile} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getFirestore,doc,setDoc,collection,addDoc,query,orderBy,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const $=id=>document.getElementById(id);
+const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
+let me=null,peer=null,unsubMsgs=null,users=[],signup=false;
+
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
+let dp;addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;$('install').classList.remove('hide')});
+$('install').onclick=async()=>{dp.prompt();await dp.userChoice;$('install').classList.add('hide')};
+
+// ---- auth
+$('toggle').onclick=()=>{signup=!signup;$('name').classList.toggle('hide',!signup);$('name').required=signup;
+ $('authBtn').textContent=signup?'Create account':'Log in';
+ $('toggle').textContent=signup?'Have an account? Log in':'New here? Create account';$('err').textContent=''};
+$('authForm').onsubmit=async e=>{e.preventDefault();$('err').textContent='';
+ try{
+  if(signup){const c=await createUserWithEmailAndPassword(auth,$('email').value,$('pass').value);
+   await updateProfile(c.user,{displayName:$('name').value.trim()});
+   await setDoc(doc(db,'users',c.user.uid),{name:$('name').value.trim(),email:$('email').value,created:serverTimestamp()});
+  }else await signInWithEmailAndPassword(auth,$('email').value,$('pass').value);
+ }catch(x){$('err').textContent=x.code?.replace('auth/','').replace(/-/g,' ')||'Something went wrong'}};
+$('out').onclick=()=>signOut(auth);
+
+onAuthStateChanged(auth,u=>{me=u;
+ $('auth').classList.toggle('hide',!!u);$('app').classList.toggle('hide',!u);
+ if(u){onSnapshot(collection(db,'users'),s=>{users=s.docs.map(d=>({id:d.id,...d.data()})).filter(x=>x.id!==me.uid);renderPeople()})}
+ else{unsubMsgs?.();peer=null}});
+
+// ---- people
+const ini=n=>(n||'?').trim()[0].toUpperCase();
+function renderPeople(){const q=$('q').value.toLowerCase();
+ const l=users.filter(u=>(u.name||'').toLowerCase().includes(q));
+ $('people').innerHTML=l.length?'':'<div class="empty">No one here yet. Invite a friend to sign up.</div>';
+ l.forEach(u=>{const b=document.createElement('button');b.className='person'+(peer?.id===u.id?' on':'');
+  b.innerHTML=`<span class="av">${ini(u.name)}</span><span><b></b><small></small></span>`;
+  b.querySelector('b').textContent=u.name;b.querySelector('small').textContent=u.email;
+  b.onclick=()=>openChat(u);$('people').append(b)})}
+$('q').oninput=renderPeople;
+
+// ---- chat
+const cid=()=>[me.uid,peer.id].sort().join('_');
+function openChat(u){peer=u;unsubMsgs?.();renderPeople();
+ $('app').classList.add('chat');$('none').classList.add('hide');
+ ['head','msgs','bar'].forEach(i=>$(i).classList.remove('hide'));
+ $('hav').textContent=ini(u.name);$('hname').textContent=u.name;$('msgs').innerHTML='';
+ unsubMsgs=onSnapshot(query(collection(db,'chats',cid(),'messages'),orderBy('t')),s=>{
+  const box=$('msgs');box.innerHTML='';
+  s.docs.forEach(d=>{const m=d.data(),el=document.createElement('div');el.className='m'+(m.from===me.uid?' me':'');
+   if(m.img){const i=new Image();i.src=m.img;i.alt='Photo';i.onclick=()=>{$('view').firstElementChild.src=m.img;$('view').classList.remove('hide')};el.append(i)}
+   if(m.text){el.append(document.createTextNode(m.text))}
+   const t=document.createElement('time');t.textContent=m.t?.toDate().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})||'';el.append(t);box.append(el)});
+  box.scrollTop=box.scrollHeight})}
+$('back').onclick=()=>{$('app').classList.remove('chat')};
+$('view').onclick=()=>$('view').classList.add('hide');
+
+const send=data=>addDoc(collection(db,'chats',cid(),'messages'),{from:me.uid,t:serverTimestamp(),...data});
+$('bar').onsubmit=e=>{e.preventDefault();const t=$('txt').value.trim();if(!t||!peer)return;$('txt').value='';send({text:t})};
+$('file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f||!peer)return;
+ try{send({img:await shrink(f)})}catch{alert('Could not send this photo. Try a different one.')}};
+
+// photos are resized in the browser and stored with the message (no paid storage needed)
+function shrink(file){return new Promise((ok,no)=>{const i=new Image();i.onload=()=>{
+ let w=i.width,h=i.height,s=Math.min(1,900/Math.max(w,h));w*=s;h*=s;
+ const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(i,0,0,w,h);
+ let q=.75,d=c.toDataURL('image/jpeg',q);while(d.length>900000&&q>.3){q-=.1;d=c.toDataURL('image/jpeg',q)}
+ d.length>1000000?no():ok(d)};i.onerror=no;i.src=URL.createObjectURL(file)})}
+</script>
+</body></html>

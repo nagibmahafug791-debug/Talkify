@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    match /users/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth.uid == uid;
+    }
+    match /chats/{chatId}/messages/{m} {
+      allow read, create: if request.auth != null && chatId.matches('.*' + request.auth.uid + '.*')
+        && (request.method == 'get' || request.method == 'list' || request.resource.data.from == request.auth.uid);
+    }
+  }
+}
