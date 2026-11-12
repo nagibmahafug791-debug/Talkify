@@ -1,7 +1,9 @@
-// Firebase Console > Project settings > Your apps > Web app theke config ekhane paste korun
 export const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCequp8RuuHwtspP-Illo_KvTLRpHT6drA",
+  authDomain: "love-message-app-af359.firebaseapp.com",
+  projectId: "love-message-app-af359",
+  storageBucket: "love-message-app-af359.firebasestorage.app",
+  messagingSenderId: "435148075886",
+  appId: "1:435148075886:web:73072d805d99e48993077f",
+  measurementId: "G-Y2S0XLW7VG"
 };
